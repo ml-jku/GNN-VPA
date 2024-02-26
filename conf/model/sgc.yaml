@@ -1,0 +1,10 @@
+_target_: src.models.sgc.SGCModel
+num_layers: ${num_layers}
+num_features: null
+conv_hidden_dim: 64
+fc_hidden_dim: 128
+num_classes: null
+final_dropout: 0.5
+graph_pooling_type: ${agg}
+neighbor_pooling_type: ${agg}
+lr: ${lr}

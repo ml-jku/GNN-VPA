@@ -1,0 +1,18 @@
+defaults:
+  - _self_
+  - datamodule: tu_datamodule
+  - trainer: default
+  - model: gat #gcn #gin, gcn
+  - logger: wb
+
+seed: 42
+batch_size: 64
+fold_idx: 0
+dataset_name: COLLAB #IMDB-MULTI #IMDB-BINARY #NCI1 #MUTAG #COLLAB #PTC_FM # PROTEINS #REDDIT-BINARY #REDDIT-MULTI-5K
+tag_to_index: 0 #1 or 0
+agg: vpa # mean, sum, vpa, max
+model_name: None
+accelerator: cpu
+devices: 3
+lr: 0.001
+num_layers: 5

@@ -1,0 +1,9 @@
+/results/loss_per_epoch/
+/results/loss_per_step/
+__pycache__/
+.idea/
+data/
+outputs/
+wandb/
+multirun/
+vpa*/

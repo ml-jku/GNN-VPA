@@ -1,0 +1,43 @@
+_target_: src.datasets.DataModule
+train_dataloader:
+  _target_: torch_geometric.loader.dataloader.DataLoader
+  batch_size: ${batch_size}
+  shuffle: true
+  pin_memory: true
+  num_workers: 5
+  dataset:
+    _target_: src.datasets.CustomTUDataset
+    dataset_name: ${dataset_name}
+    fold_idx: ${fold_idx}
+    mode: train
+    use_node_attr: true
+    seed: ${seed}
+    tag_to_index: ${tag_to_index}
+val_dataloader:
+  _target_: torch_geometric.loader.dataloader.DataLoader
+  batch_size: ${batch_size}
+  shuffle: false
+  pin_memory: true
+  num_workers: 5
+  dataset:
+    _target_: src.datasets.CustomTUDataset
+    dataset_name: ${dataset_name}
+    fold_idx: ${fold_idx}
+    mode: val
+    use_node_attr: true
+    seed: ${seed}
+    tag_to_index: ${tag_to_index}
+test_dataloader:
+  _target_: torch_geometric.loader.dataloader.DataLoader
+  batch_size: ${batch_size}
+  shuffle: false
+  pin_memory: true
+  num_workers: 5
+  dataset:
+    _target_: src.datasets.CustomTUDataset
+    dataset_name: ${dataset_name}
+    fold_idx: ${fold_idx}
+    mode: test
+    use_node_attr: true
+    seed: ${seed}
+    tag_to_index: ${tag_to_index}
