@@ -6,6 +6,10 @@ from torch_geometric.nn.aggr import Aggregation
 
 
 class VariancePreservingAggregation(Aggregation):
+
+    '''
+    A variance-preserving aggregation function.'''
+
     def forward(
         self,
         x: Tensor,
@@ -14,11 +18,9 @@ class VariancePreservingAggregation(Aggregation):
         dim_size: Optional[int] = None,
         dim: int = -1,
     ) -> Tensor:
-        sorted_indices, argsort = torch.sort(index)
-        sorted_x = x[argsort]
 
-        sum_aggregation = self.reduce(sorted_x, sorted_indices, ptr, dim_size, dim, reduce="sum")
-        counts = self.reduce(torch.ones_like(x), sorted_indices, ptr, dim_size, dim, reduce="sum")
+        sum_aggregation = self.reduce(x, index, ptr, dim_size, dim, reduce="sum")
+        counts = self.reduce(torch.ones_like(x), index, ptr, dim_size, dim, reduce="sum")
 
         return torch.nan_to_num(sum_aggregation / torch.sqrt(counts))
 

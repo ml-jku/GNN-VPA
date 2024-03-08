@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import pytorch_lightning as pl
 from torchmetrics.classification import Accuracy
 from torchmetrics.aggregation import MeanMetric
-from torch_geometric.nn.aggr import SumAggregation, MeanAggregation, MaxAggregation
+from torch_geometric.nn.aggr import SumAggregation, MeanAggregation
 from src.agg import VariancePreservingAggregation
 
 from src.tg_vpa.sg_conv import SGConv
@@ -28,16 +28,12 @@ class SGCModel(pl.LightningModule):
         self.neighbor_pooling_type = neighbor_pooling_type
         self.graph_pooling_type = graph_pooling_type
 
-        if self.graph_pooling_type == 'default':
-            self.pool = SumAggregation()
-        elif self.graph_pooling_type in ['sum', 'add']:
+        if self.graph_pooling_type in ['sum', 'add', 'default']:
             self.pool = SumAggregation()
         elif self.graph_pooling_type in ['mean', 'average']:
             self.pool = MeanAggregation()
         elif self.graph_pooling_type in ['vpa', 'vpp', 'vp']:
             self.pool = VariancePreservingAggregation()
-        elif self.graph_pooling_type == 'max':
-            self.pool = MaxAggregation()
 
         self.conv = SGConv(self.num_features, self.conv_hidden_dim, self.num_layers, aggr=self.neighbor_pooling_type)
 
@@ -110,11 +106,6 @@ class SGCModel(pl.LightningModule):
         return loss
 
     def on_train_epoch_start(self):
-        for i in self.named_parameters():
-            if "conv1." in i[0] or "conv2." in i[0] or "out" in i[0]:
-                self.log(i[0] + '_mean', i[1].mean())
-                self.log(i[0] + '_std', i[1].std())
-
         for i in self.metrics["train"]:
             self.metrics["train"][i].to(self.device)
 

@@ -26,14 +26,11 @@ def run(cfg: DictConfig):
     datamodule = instantiate(cfg.datamodule)
     dataset = datamodule.train_dataloader().dataset
     if dataset.num_features == 0:
-        # cfg.model.model.num_features = 1
-        cfg.model.num_features = 1
+        cfg.model.model.num_features = 1
     else:
-        # cfg.model.model.num_features = dataset.num_features
-        cfg.model.num_features = dataset.num_features
-    # cfg.model.model.num_classes = dataset.num_classes
-    cfg.model.num_classes = dataset.num_classes
-    model = instantiate(cfg.model)
+        cfg.model.model.num_features = dataset.num_features
+    cfg.model.model.num_classes = dataset.num_classes
+    model = instantiate(cfg.model.model)
 
     checkpoint_callback = ModelCheckpoint(monitor="valid/acc", mode="max", save_top_k=1)
 
@@ -53,101 +50,55 @@ def run_model(cfg: DictConfig):
 
 @hydra.main(config_path="conf", config_name="config", version_base="1.2")
 def batch_run(cfg: DictConfig):
-    for dataset, tag_to_index in zip(['MUTAG', 'NCI1', 'PROTEINS', 'PTC_FM',
-                    'IMDB-BINARY', 'IMDB-MULTI', 'COLLAB', 'REDDIT-BINARY', 'REDDIT-MULTI-5K',
-                    'IMDB-BINARY', 'IMDB-MULTI', 'COLLAB', 'REDDIT-BINARY', 'REDDIT-MULTI-5K'],
-                    [0, 0, 0, 0,
-                    1, 1, 1, 1, 1,
-                    0, 0, 0, 0, 0]):
-        aggs = []
-        fold_inds = []
-        epochs = []
-        train_accs = []
-        val_accs = []
-        best_val_accs = []
-        test_accs = []
-        
-        #for agg in ['max', 'vpa', 'sum', 'mean']:
-        loss_per_epoch = []
-        loss_per_step = []
-        for fold_idx in range(10):
-            cfg.dataset_name = dataset
-            cfg.tag_to_index = tag_to_index
-            cfg.fold_idx = fold_idx
-            #cfg.agg = agg
-            print(OmegaConf.to_yaml(cfg))
-            best_epoch, train_acc, val_acc, best_val_acc, test_acc, train_loss, step_size = run(cfg)
 
-            aggs.append(cfg.agg)
-            fold_inds.append(fold_idx)
-            epochs.append(best_epoch)
-            train_accs.append(train_acc)
-            val_accs.append(val_acc)
-            best_val_accs.append(best_val_acc)
-            test_accs.append(test_acc)
+    # only run training for single configuration as defined in config file
+    if cfg.batch_run == False:
+        print(OmegaConf.to_yaml(cfg))
+        run(cfg)
 
-            epoch_loss = []
-            k = int(len(train_loss)/200)
-            num_samples = np.sum(step_size)/200
-            for i in range(200):
-                loss_value = 0
-                for j in range(i,i+k):
-                    loss_value += train_loss[j]*step_size[j]
-                loss_value /= num_samples
-                epoch_loss.append(loss_value)
+    # run training for all datasets with 10-fold cross-validation
+    else:
+        for dataset, deg_features in zip(['MUTAG', 'NCI1', 'PROTEINS', 'PTC_FM',
+                        'IMDB-BINARY', 'IMDB-MULTI', 'COLLAB', 'REDDIT-BINARY', 'REDDIT-MULTI-5K',
+                        'IMDB-BINARY', 'IMDB-MULTI', 'COLLAB', 'REDDIT-BINARY', 'REDDIT-MULTI-5K'],
+                        [0, 0, 0, 0,
+                        1, 1, 1, 1, 1,
+                        0, 0, 0, 0, 0]):
 
-            loss_per_step.append(train_loss)
-            loss_per_epoch.append(epoch_loss)
-
-            loss_per_step_array = np.array(loss_per_step)
-            print(loss_per_step_array.shape)
-            loss_per_epoch_array = np.array(loss_per_epoch)
-            print(loss_per_epoch_array.shape)
-
-            np.save(f'results/loss_per_epoch/{cfg.model_name}_{dataset}_{cfg.tag_to_index}_{cfg.lr}.npy', loss_per_epoch_array)
-            np.save(f'results/loss_per_step/{cfg.model_name}_{dataset}_{cfg.tag_to_index}_{cfg.lr}.npy', loss_per_step_array)
-
-        results = pd.DataFrame({'aggregation': aggs, 'fold_idx': fold_inds, 'test_epoch': epochs, 'train_acc': train_accs, 'val_acc': val_accs, 'best_val_acc': best_val_accs, 'test_acc': test_accs})
-        results.to_csv(f'results/metrics/{cfg.model_name}_{cfg.agg}_{dataset}_{cfg.tag_to_index}_{cfg.lr}.csv', index=False)
-
-
-
-@hydra.main(config_path="conf", config_name="config", version_base="1.2")
-def run_layer_exp(cfg: DictConfig):
-    for dataset in ['IMDB-BINARY','IMDB-MULTI', 'NCI1', 'MUTAG', 'PROTEINS', 'PTC_FM']: # ['COLLAB', 'REDDIT-BINARY']:   # 
-        aggs = []
-        fold_inds = []
-        epochs = []
-        train_accs = []
-        val_accs = []
-        best_val_accs = []
-        test_accs = []
-        
-        for agg in ['sum', 'mean', 'vpa']:  #'sum', 'mean', 
-            loss_per_epoch = []
+            fold_inds = []
+            epochs = []
+            train_accs = []
+            val_accs = []
+            best_val_accs = []
+            test_accs = []
+            
             loss_per_step = []
-            for fold_idx in [0]:  #range(10):
-                for num_layers in [50, 60, 70, 80, 90, 100, 120]:
-                    cfg.dataset_name = dataset
-                    cfg.fold_idx = fold_idx
-                    cfg.model.num_layers = num_layers
-                    cfg.agg = agg
-                    cfg.trainer.max_epochs = 50
-                    print(OmegaConf.to_yaml(cfg))
-                    best_epoch, train_acc, val_acc, best_val_acc, test_acc, train_loss, step_size = run(cfg)
+            loss_per_epoch = []
+            
 
-                    aggs.append(agg)
-                    fold_inds.append(fold_idx)
-                    epochs.append(best_epoch)
-                    train_accs.append(train_acc)
-                    val_accs.append(val_acc)
-                    best_val_accs.append(best_val_acc)
-                    test_accs.append(test_acc)
+            for fold_idx in range(10):
 
+                cfg.dataset_name = dataset
+                cfg.deg_features = deg_features
+                cfg.fold_idx = fold_idx
+
+                print(OmegaConf.to_yaml(cfg))
+                best_epoch, train_acc, val_acc, best_val_acc, test_acc, train_loss, step_size = run(cfg)
+
+
+                fold_inds.append(fold_idx)
+                epochs.append(best_epoch)
+                train_accs.append(train_acc)
+                val_accs.append(val_acc)
+                best_val_accs.append(best_val_acc)
+                test_accs.append(test_acc)
+
+                if cfg.save_learning_curves == True:
+                    num_epochs = cfg.trainer.max_epochs
                     epoch_loss = []
-                    k = int(len(train_loss)/50)
-                    num_samples = np.sum(step_size)/50
-                    for i in range(50):
+                    k = int(len(train_loss)/num_epochs)
+                    num_samples = np.sum(step_size)/num_epochs
+                    for i in range(num_epochs):
                         loss_value = 0
                         for j in range(i,i+k):
                             loss_value += train_loss[j]*step_size[j]
@@ -158,17 +109,24 @@ def run_layer_exp(cfg: DictConfig):
                     loss_per_epoch.append(epoch_loss)
 
                     loss_per_step_array = np.array(loss_per_step)
-                    print(loss_per_step_array.shape)
                     loss_per_epoch_array = np.array(loss_per_epoch)
-                    print(loss_per_epoch_array.shape)
 
-        results = pd.DataFrame(
-            {'aggregation': aggs, 'fold_idx': fold_inds, 'test_epoch': epochs, 'train_acc': train_accs,
-             'val_acc': val_accs, 'best_val_acc': best_val_accs, 'test_acc': test_accs})
-        results.to_csv(f'results/metrics/{cfg.model_name}_{dataset}_{cfg.tag_to_index}.csv', index=False)
+                    if not os.path.exists("results/loss_per_step"): 
+                        os.makedirs("results/loss_per_step") 
+                    np.save(f'results/loss_per_step/{cfg.model.name}_{cfg.agg}_{dataset}_{cfg.deg_features}.npy', loss_per_step_array)
+
+                    if not os.path.exists("results/loss_per_epoch"): 
+                        os.makedirs("results/loss_per_epoch") 
+                    np.save(f'results/loss_per_epoch/{cfg.model.name}_{cfg.agg}_{dataset}_{cfg.deg_features}.npy', loss_per_epoch_array)
+
+            if cfg.save_results == True:
+
+                if not os.path.exists("results"): 
+                    os.makedirs("results") 
+
+                results = pd.DataFrame({'fold_idx': fold_inds, 'test_epoch': epochs, 'train_acc': train_accs, 'val_acc': val_accs, 'best_val_acc': best_val_accs, 'test_acc': test_accs})
+                results.to_csv(f'results/{cfg.model.name}_{cfg.agg}_{dataset}_{cfg.deg_features}.csv', index=False)
 
 
 if __name__ == "__main__":
-    run_model()
-    # run_layer_exp()
-    #batch_run()
+    batch_run()

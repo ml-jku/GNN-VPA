@@ -28,7 +28,7 @@ class GATModel(pl.LightningModule):
         self.neighbor_pooling_type = neighbor_pooling_type
         self.graph_pooling_type = graph_pooling_type
 
-        if self.graph_pooling_type in ['sum', 'add']:
+        if self.graph_pooling_type in ['sum', 'add', 'default']:
             self.pool = SumAggregation()
         elif self.graph_pooling_type in ['vpa', 'vpp', 'vp']:
             self.pool = VariancePreservingAggregation()
@@ -113,11 +113,6 @@ class GATModel(pl.LightningModule):
         return loss
 
     def on_train_epoch_start(self):
-        for i in self.named_parameters():
-            if "conv1." in i[0] or "conv2." in i[0] or "out" in i[0]:
-                self.log(i[0] + '_mean', i[1].mean())
-                self.log(i[0] + '_std', i[1].std())
-
         for i in self.metrics["train"]:
             self.metrics["train"][i].to(self.device)
 

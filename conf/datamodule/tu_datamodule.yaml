@@ -12,7 +12,7 @@ train_dataloader:
     mode: train
     use_node_attr: true
     seed: ${seed}
-    tag_to_index: ${tag_to_index}
+    deg_features: ${deg_features}
 val_dataloader:
   _target_: torch_geometric.loader.dataloader.DataLoader
   batch_size: ${batch_size}
@@ -26,7 +26,7 @@ val_dataloader:
     mode: val
     use_node_attr: true
     seed: ${seed}
-    tag_to_index: ${tag_to_index}
+    deg_features: ${deg_features}
 test_dataloader:
   _target_: torch_geometric.loader.dataloader.DataLoader
   batch_size: ${batch_size}
@@ -40,4 +40,4 @@ test_dataloader:
     mode: test
     use_node_attr: true
     seed: ${seed}
-    tag_to_index: ${tag_to_index}
+    deg_features: ${deg_features}

@@ -7,6 +7,11 @@ from src.agg import VariancePreservingAggregation
 
 
 class GINConv(GINConv):
+
+    '''
+    Adaptation of torch-geometric's GINConv layer to variance preserving aggregation.
+    '''
+
     def __init__(self, nn: Callable, train_eps: bool = False, aggr: str = 'sum', **kwargs):
         kwargs.setdefault('aggr', 'add')
         super().__init__(nn, train_eps, **kwargs)
@@ -21,7 +26,7 @@ class GINConv(GINConv):
         elif self.aggr == 'max':
             self.aggr_module = MaxAggregation()
         else:
-            raise NotImplementedError('invalid aggregation')
+            raise NotImplementedError('Invalid aggregation function.')
 
     def aggregate(self, inputs: Tensor, index: Tensor,
                   ptr: Optional[Tensor] = None,

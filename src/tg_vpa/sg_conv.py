@@ -30,6 +30,11 @@ def gcn_norm(
     dtype: Optional[torch.dtype] = None,
     aggr: str = "mean"
 ):
+
+    '''
+    Adaptation of gcn_norm function from torch-geometric's SGConv layer to variance preserving aggregation.
+    '''
+
     fill_value = 2. if improved else 1.
 
     if isinstance(edge_index, SparseTensor):
@@ -43,13 +48,14 @@ def gcn_norm(
             adj_t = torch_sparse.fill_diag(adj_t, fill_value)
 
         deg = torch_sparse.sum(adj_t, dim=1)
-        if aggr == 'default':
-            deg_inv_sqrt = deg.pow_(-0.5)
-        elif aggr in ['mean', 'average']:
+        if aggr == ['default', 'mean', 'average']:
+            # original SGC version with degree normalization, approximatly equivalent to mean aggregation
             deg_inv_sqrt = deg.pow_(-0.5)
         elif aggr in ['sum', 'add']:
+            # version without degree normalization, equivalent to sum aggregation
             deg_inv_sqrt = deg.pow_(0)
         elif aggr in ['vpa', 'vpp', 'vp']:
+            # variance preserving version of degree normalization
             deg_inv_sqrt = deg.pow_(-0.25)
         deg_inv_sqrt.masked_fill_(deg_inv_sqrt == float('inf'), 0.)
         adj_t = torch_sparse.mul(adj_t, deg_inv_sqrt.view(-1, 1))
@@ -108,7 +114,7 @@ def gcn_norm(
     elif aggr in ['vpa', 'vpp', 'vp']:
         deg_inv_sqrt = deg.pow_(-0.25)
     else:
-        raise NotImplementedError('invalid aggregation')
+        raise NotImplementedError('Invalid aggregation function.')
 
     deg_inv_sqrt.masked_fill_(deg_inv_sqrt == float('inf'), 0)
     edge_weight = deg_inv_sqrt[row] * edge_weight * deg_inv_sqrt[col]
@@ -117,6 +123,11 @@ def gcn_norm(
 
 
 class SGConv(SGConv):
+
+    '''
+    Adaptation of gcn_norm function from torch-geometric's SGConv layer to variance preserving aggregation.
+    '''
+
     def __init__(self, in_channels: int, out_channels: int, K: int, aggr: str, **kwargs):
         kwargs.setdefault('aggr', 'add')
         super().__init__(in_channels, out_channels, **kwargs)

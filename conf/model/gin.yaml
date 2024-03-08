@@ -1,11 +1,13 @@
-_target_: src.models.gin.GINModel
-num_layers: ${num_layers}
-num_mlp_layers: 2
-num_features: null
-hidden_dim: 64
-num_classes: null
-final_dropout: 0.5
-train_eps: False
-graph_pooling_type: ${agg}
-neighbor_pooling_type: ${agg}
-lr: ${lr}
+name: gin
+model:
+  _target_: src.models.gin.GINModel
+  num_layers: 5
+  num_mlp_layers: 2
+  num_features: null
+  hidden_dim: 64
+  num_classes: null
+  final_dropout: 0.5
+  train_eps: False
+  graph_pooling_type: ${agg}
+  neighbor_pooling_type: ${agg}
+  lr: 0.001

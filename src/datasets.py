@@ -51,12 +51,12 @@ def subset_from_indices(dataset, indices):
 
 
 class CustomTUDataset(InMemoryDataset):
-    def __init__(self, dataset_name, fold_idx, mode, use_node_attr=True, seed=42, tag_to_index=0):
+    def __init__(self, dataset_name, fold_idx, mode, use_node_attr=True, seed=42, deg_features=0):
         dataset = TUDataset(f"./data/", dataset_name, use_node_attr=use_node_attr)
 
         train_idx, val_idx, test_idx = get_splits(dataset, seed=seed, fold_idx=fold_idx)
 
-        if tag_to_index == 1:  # set node features to the node's degree
+        if deg_features == 1:  # set node features to the node's degree
 
             tag2index_dict = tag2index(dataset)
             processed_dataset = []

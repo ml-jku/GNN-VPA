@@ -8,6 +8,11 @@ from src.agg import VariancePreservingAggregation
 
 
 class GraphConv(GraphConv):
+
+    '''
+    Adaptation of torch-geometric's GraphConv layer to variance preserving aggregation.
+    '''
+
     def __init__(self, in_channels: int, out_channels: int, aggr: str, **kwargs):
         kwargs.setdefault('aggr', 'add')
         super().__init__(in_channels, out_channels, **kwargs)
@@ -22,7 +27,7 @@ class GraphConv(GraphConv):
         elif self.aggr == 'max':
             self.aggr_module = MaxAggregation()
         else:
-            raise NotImplementedError('invalid aggregation')
+            raise NotImplementedError('Invalid aggregation function.')
 
     def aggregate(self, inputs: Tensor, index: Tensor,
                   ptr: Optional[Tensor] = None,
